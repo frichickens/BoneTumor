@@ -88,7 +88,7 @@ class DiscreteStackedDiffusionModel(nn.Module):
         return output
         
     def forward(self, x, infer=True, collect_mid_step=False):
-        # BxCxHxW
+        # B x C x H x W
         batch_size = x.size(0)
         
         # run phase 1
@@ -122,6 +122,7 @@ class DiscreteStackedDiffusionModel(nn.Module):
         x_conts = torch.cat([x_cont for _ in range(n_samples)], dim=0).to(x_cont.device)
         x_conds = torch.cat([x_cond for _ in range(n_samples)], dim=0).to(x_cond.device)
         
+        # run phase 2
         outs = self.phase2_refiner.sample_infer(x_conds, x_conts, 
                                                 clip_denoised=self.option['bbdm']['clip_denoised'],
                                                 collect_mid_step=collect_mid_step)
@@ -184,7 +185,7 @@ class DiscreteStackedDiffusionModel(nn.Module):
             
             mask = mask.unsqueeze(-1)  # Thêm chiều mới để có kích thước (h, w, 1)
             
-            # # Nếu mặt nạ có giá trị hợp lệ, tạo mặt nạ lớp tương ứng
+            # Nếu mặt nạ có giá trị hợp lệ, tạo mặt nạ lớp tương ứng
             if mask.sum() > 0:
                 class_mask = torch.zeros_like(output).to(image.device)
                 class_mask[:, :, idx] = 1.0
@@ -252,7 +253,7 @@ class DiscreteStackedDiffusionModel(nn.Module):
         return preds, num_h, num_w, h, w
     
     def _crop_tensor(self, img, crop_sz, step):
-        # img: BxCxHxW
+        # img: B x C x H x W
         b, c, h, w = img.shape
         h_space = np.arange(0, h - crop_sz + 1, step)
         w_space = np.arange(0, w - crop_sz + 1, step)
